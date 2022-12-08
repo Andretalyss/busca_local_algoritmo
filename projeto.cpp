@@ -13,6 +13,13 @@ int n_elementos;
 int array[30];
 int lista[100][100];
 
+struct trenos {
+    int array[30];
+    int itens;
+    int qtd;
+};
+
+
 int ReadInstance(){
     FILE *arq;
 
@@ -45,16 +52,83 @@ int ReadInstance(){
 int main(){
     ReadInstance();
 
-    printf(" k = %d \n n_presentes = %d \n q = %d \n n_elementos = %d \n", k, n_presentes, q, n_elementos);
-    
-    for (int i=0; i<n_presentes; i++){
-        printf("array[%d] = %d \n", i, array[i]);
+    struct trenos trenos[30];
+
+    //Adicionando peso para cada trenó
+    for (int i=0; i<n_presentes;i++){
+        trenos[i].qtd = q;
+        trenos[i].itens = 0;
+
+        for(int j=0;j<n_presentes;j++){
+            trenos[i].array[j] = 100;
+        }
     }
 
-    for(int i=1; i<=n_presentes;i++){
-        for(int k=1; k<=n_presentes; k++){
-            printf("lista[%d][%d] = %d \n", i, k, lista[i][k]);
+    int aux2 = 0;
+    int t_arm = 0;
+    
+    // For percorrendo os trenós
+    for(int i=0;i<n_presentes; i++){
+        printf("treno %d \n", i);
+        if(!trenos[i].qtd){
+            printf("quantidade treno[%d] = %d \n", i, trenos[i].qtd);
+            continue;
         }
+
+        // For percorrendo os presentes
+        for(int p=aux2; p<n_presentes;p++){                
+            printf("entrou p = %d \n", p);
+            bool flag = false;
+            if(trenos[i].qtd < array[p]){
+                break;
+            }
+            
+            
+            for(int t=0; t<n_presentes;t++){
+                printf("entrou t = %d  \n", t);
+                
+                // não houve ocorrencias
+                flag = true;
+                int aux = trenos[i].array[t];
+                
+                if(aux == 100){                  
+                    t_arm = t;
+                    aux2 = p+1;
+                    break;
+                }
+
+                if(lista[aux][p]){
+                    flag = false;
+                    aux2 = p;
+                    break;
+                }
+                
+            }
+
+            if(!flag){
+                break;
+            }else{
+                printf("entrou\n");
+                trenos[i].array[t_arm] = array[p];
+                trenos[i].qtd = trenos[i].qtd - array[p];
+                trenos[i].itens++;
+
+                printf("numero de itens treno[%d] = %d \n", i, trenos[i].itens);
+
+                i=-1;
+                break;
+            }            
+        }
+    }
+
+
+    for(int i=0;i<n_presentes;i++){
+       if(trenos[i].itens == 0){
+            continue;
+       }
+
+       printf("trenos[%d] = %d \n", i, trenos[i].itens);
+
     }
     return 0;
 }
