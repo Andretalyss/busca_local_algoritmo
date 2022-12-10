@@ -122,7 +122,7 @@ void ordenavetor_vnd(){
         
 }
 
-void vnd(){
+void vnd1(){
     int melhor_vizinho = N_PRESENTES;
     bool inc = false;
     bool zerou = false;
@@ -206,6 +206,10 @@ void vnd(){
         printf("Melhor vizinho = %d , melhor = %d \n", melhor_vizinho, melhor);
     }
     
+    
+}
+
+void vnd2(){
     
 }
 
@@ -310,7 +314,7 @@ int main(){
     printf("Melhor resultado = %d \n", melhor);
 
 
-    vnd();
+    // vnd1();
 
     return 0;
 }
