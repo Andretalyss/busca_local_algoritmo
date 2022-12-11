@@ -5,7 +5,7 @@
 #include <iostream>
 #include <unistd.h>
 
-#define N_PRESENTES 120
+#define N_PRESENTES 30
 
 using namespace std;
 
@@ -14,8 +14,8 @@ int n_presentes;
 int q;
 int n_elementos;
 int array[N_PRESENTES];
-int lista[400][400];
-int melhor;
+int lista[100][100];
+// int melhor;
 
 struct trenos {
     int array[N_PRESENTES];
@@ -56,7 +56,7 @@ int ReadInstance(){
 
 }
 
-void copia_trenos(){
+void copia_trenos(int melhor){
     for(int i=0;i<melhor;i++){
        if(trenos[i].itens == 0){
             continue;
@@ -85,14 +85,14 @@ void ordenavetor(){
     }
 }
 
-void ordenavetor_vnd(){
+void ordenavetor_vnd(int melhor){
     int troca;
     int copia;
 
     do {
         troca = 0;
         for(int i=0;i<melhor;i++){
-            for(int j=0;i<N_PRESENTES;i++){
+            for(int j=0;j<N_PRESENTES;j++){
                 if(trenos[i].array[j] > trenos[i].array[j+1]){
                     copia = trenos[i].array[j];
                     trenos[i].array[j] = trenos[i].array[j+1];
@@ -122,7 +122,7 @@ void ordenavetor_vnd(){
         
 }
 
-void vnd1(){
+void vnd1(int melhor, bool copiar){
     int melhor_vizinho = N_PRESENTES;
     bool inc = false;
     bool zerou = false;
@@ -133,7 +133,9 @@ void vnd1(){
             if(zerou)
                 break;
 
-            copia_trenos();
+            if(!copiar){
+               copia_trenos(melhor);
+            }
             
             for(int j=0;j<N_PRESENTES;j++){
                 if(trenos_aux[i].array[j] == 1000)
@@ -148,9 +150,12 @@ void vnd1(){
                     if(t==i)
                         continue;
                     
+                    if(trenos_aux[t].itens == 0)
+                        continue;
+                    
                     inc = false;
                     printf("Comparando trenos[%d].posicao[%d] com trenos[%d] \n", i, j, t);
-                    printf("Comparando capacidade do treno[%d] = %d com presente %d de peso %d\n", t, trenos[t].qtd, trenos[i].array_index[j], trenos[i].array[j]);
+                    printf("Comparando capacidade do treno[%d] = %d com presente %d de peso %d\n", t, trenos_aux[t].qtd, trenos_aux[i].array_index[j], trenos_aux[i].array[j]);
                     if(trenos_aux[t].qtd >= trenos_aux[i].array[j]){
                         for(int s=0;s<N_PRESENTES;s++){
                             if(trenos_aux[t].array[s] == 1000)
@@ -204,6 +209,10 @@ void vnd1(){
         }
 
         printf("Melhor vizinho = %d , melhor = %d \n", melhor_vizinho, melhor);
+        if(melhor_vizinho < melhor){
+            copiar = true;
+            vnd1(melhor_vizinho, copiar);
+        }
     }
     
     
@@ -215,7 +224,8 @@ void vnd2(){
 
 int main(){
     ReadInstance();
-    melhor = 0;
+    int melhor = 0;
+    bool copiar = false;
 
     //Adicionando peso para cada trenó
     for (int i=0; i<n_presentes;i++){
@@ -314,7 +324,7 @@ int main(){
     printf("Melhor resultado = %d \n", melhor);
 
 
-    // vnd1();
+    vnd1(melhor, copiar);
 
     return 0;
 }

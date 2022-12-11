@@ -4,6 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
+#include <time.h>   
 
 #define N_PRESENTES 30
 
@@ -15,7 +16,7 @@ int q;
 int n_elementos;
 int array[N_PRESENTES];
 int array_index[N_PRESENTES];
-int lista[100][100];
+int lista[N_PRESENTES][N_PRESENTES];
 
 struct trenos {
     int array[N_PRESENTES];
@@ -30,7 +31,7 @@ struct trenos trenos_aux[N_PRESENTES];
 int ReadInstance(){
     FILE *arq;
 
-    arq = fopen("teste.txt", "r");
+    arq = fopen("./instances/n30_k150_A.txt", "r");
     if(!arq) {
         puts("Não abriu");
         return 0;
@@ -137,8 +138,8 @@ void vnd1(int melhor, bool copiar){
                         continue;
                     
                     inc = false;
-                    printf("Comparando trenos[%d].posicao[%d] com trenos[%d] \n", i, j, t);
-                    printf("Comparando capacidade do treno[%d] = %d com presente %d de peso %d\n", t, trenos_aux[t].qtd, trenos_aux[i].array_index[j], trenos_aux[i].array[j]);
+                    // printf("Comparando trenos[%d].posicao[%d] com trenos[%d] \n", i, j, t);
+                    // printf("Comparando capacidade do treno[%d] = %d com presente %d de peso %d\n", t, trenos_aux[t].qtd, trenos_aux[i].array_index[j], trenos_aux[i].array[j]);
                     if(trenos_aux[t].qtd >= trenos_aux[i].array[j]){
                         for(int s=0;s<N_PRESENTES;s++){
                             if(trenos_aux[t].array[s] == 1000)
@@ -169,8 +170,8 @@ void vnd1(int melhor, bool copiar){
                             if(trenos_aux[i].itens == 0){
                                 zerou = true;
                             }
-                            printf("treno_aux[%d].itens = %d \n", i, trenos_aux[i].itens);
-                            printf("Troca posição %d do treno[%d] para o treno[%d] \n", j, i, t);
+                            // printf("treno_aux[%d].itens = %d \n", i, trenos_aux[i].itens);
+                            // printf("Troca posição %d do treno[%d] para o treno[%d] \n", j, i, t);
 
                             break;
                         }else{
@@ -202,6 +203,9 @@ void vnd1(int melhor, bool copiar){
 }
 
 int main(){
+    double time_spent = 0.0;
+    clock_t begin = clock();
+
     ReadInstance();
     ordena_presentes();
     inicializa_vetores();
@@ -214,7 +218,7 @@ int main(){
     // }
     
     //auxiliar para o p
-    int aux2 = 30;
+    int aux2 = N_PRESENTES;
 
     //auxiliar para posição vazia na sacola dos trenos
     int t_arm = 0;
@@ -287,17 +291,35 @@ int main(){
             }            
         }
     }
+    
+    clock_t end = clock();
 
+    time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
 
+    printf("\n\n ----> Tempo gasto do algoritmo guloso: %f seconds \n\n", time_spent);
+    int total = 0;
     for(int i=0;i<n_presentes;i++){
        if(trenos[i].itens == 0){
             continue;
        }
-       printf("trenos[%d].itens = %d \n", i, trenos[i].itens);
+    //    printf("trenos[%d].itens = %d \n", i, trenos[i].itens);
        melhor++;
+       
+       for(int j=0;j<N_PRESENTES;j++){
+         if(trenos[i].array[j] == 1000)
+            continue;
+
+         total++;
+       }
     }
-
+    printf("total de presentes = %d \n", total);
     printf("Melhor resultado = %d \n", melhor);
-
+    
+    time_spent = 0;
+    begin = clock();
     vnd1(melhor, copiar);
+    end = clock();
+    time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+
+    printf("\n\n ----> Tempo gasto pelo vnd1 = %f seconds \n\n", time_spent);
 }
