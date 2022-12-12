@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <time.h>   
 
-#define N_PRESENTES 1000
+#define N_PRESENTES 30
 
 using namespace std;
 
@@ -17,7 +17,8 @@ int n_elementos;
 int array[N_PRESENTES];
 int array_index[N_PRESENTES];
 int lista[N_PRESENTES][N_PRESENTES];
-// int melhor;
+int melhor_vizinho_vnd1;
+int melhor_vizinho_vnd2;
 
 struct trenos {
     int array[N_PRESENTES];
@@ -26,13 +27,15 @@ struct trenos {
     int qtd;
 };
 
-struct trenos trenos[N_PRESENTES];
-struct trenos trenos_aux[N_PRESENTES];
+struct trenos trenos[N_PRESENTES]; 
+struct trenos trenos_aux[N_PRESENTES]; // Utilizado para o vnd1.
+struct trenos trenos_aux1[N_PRESENTES]; // Utilizado para o vnd2.
 
 int ReadInstance(){
     FILE *arq;
 
-    arq = fopen("./instances/n1000_k200_B.txt", "r");
+    // Seleciona o arquivo de instâncias a ser lido.
+    arq = fopen("./instances/n30_k150_A.txt", "r");
     if(!arq) {
         puts("Não abriu");
         return 0;
@@ -86,7 +89,7 @@ void inicializa_vetores(){
         trenos[i].qtd = q;
         trenos[i].itens = 0;
 
-        // Inicializa sacola do treno com 100 em cada index.
+        // Inicializa sacola do treno com 1000 em cada index.
         for(int j=0;j<n_presentes;j++){
             trenos[i].array[j] = 1000;
         }
@@ -100,19 +103,33 @@ void copia_trenos(int melhor){
        }
        trenos_aux[i].qtd = trenos[i].qtd;
        trenos_aux[i].itens = trenos[i].itens;
-       for(int j=0;j<N_PRESENTES;j++){
+       for(int j=0;j<trenos[i].itens;j++){
             trenos_aux[i].array[j] = trenos[i].array[j];
             trenos_aux[i].array_index[j] = trenos[i].array_index[j]; 
        }
     }
 }
 
+void copia_trenos_vnd2(int melhor){
+    for(int i=0;i<melhor;i++){
+       if(trenos_aux[i].itens == 0){
+            continue;
+       }
+       trenos_aux1[i].qtd = trenos_aux[i].qtd;
+       trenos_aux1[i].itens = trenos_aux[i].itens;
+       for(int j=0;j<trenos_aux[i].itens;j++){
+            trenos_aux1[i].array[j] = trenos_aux[i].array[j];
+            trenos_aux1[i].array_index[j] = trenos_aux[i].array_index[j]; 
+       }
+    }
+}
+
 void vnd1(int melhor, bool copiar){
-    int melhor_vizinho = N_PRESENTES;
+    melhor_vizinho_vnd1 = N_PRESENTES;
     bool inc = false;
     bool zerou = false;
-    while(melhor <= melhor_vizinho){
-        melhor_vizinho = N_PRESENTES;
+    while(melhor < melhor_vizinho_vnd1){
+        melhor_vizinho_vnd1 = N_PRESENTES;
 
         for(int i=0;i<melhor;i++){
             if(zerou)
@@ -127,7 +144,6 @@ void vnd1(int melhor, bool copiar){
                     break;
                 
                 if(zerou){
-                    printf("Zerou trenó \n");
                     break;
                 }
                     
@@ -139,19 +155,16 @@ void vnd1(int melhor, bool copiar){
                         continue;
                     
                     inc = false;
-                    //printf("Comparando trenos[%d].posicao[%d] com trenos[%d] \n", i, j, t);
-                    // printf("Comparando capacidade do treno[%d] = %d com presente %d de peso %d\n", t, trenos_aux[t].qtd, trenos_aux[i].array_index[j], trenos_aux[i].array[j]);
+                    
                     if(trenos_aux[t].qtd >= trenos_aux[i].array[j]){
                         for(int s=0;s<trenos[t].itens;s++){
                             if(trenos_aux[t].array[s] == 1000)
                                 break;
                             
-                            if(lista[trenos_aux[t].array_index[s]][trenos_aux[i].array_index[j]]){
-                                // printf("Teve inc. \n");
+                            if(lista[trenos_aux[t].array_index[s]][trenos_aux[i].array_index[j]]){                               
                                 inc = true;
                                 break;
                             }else if(lista[trenos_aux[i].array_index[j]][trenos_aux[t].array_index[s]]){
-                                // printf("Teve inc. \n");
                                 inc = true;
                                 break;
                             }
@@ -171,8 +184,6 @@ void vnd1(int melhor, bool copiar){
                             if(trenos_aux[i].itens == 0){
                                 zerou = true;
                             }
-                            // printf("treno_aux[%d].itens = %d \n", i, trenos_aux[i].itens);
-                            // printf("Troca posição %d do treno[%d] para o treno[%d] \n", j, i, t);
 
                             break;
                         }else{
@@ -190,72 +201,63 @@ void vnd1(int melhor, bool copiar){
             if(trenos_aux[i].itens != 0){
                     continue;
             }
-            melhor_vizinho--;
+            melhor_vizinho_vnd1--;
         }
 
-        printf("Melhor vizinho = %d , melhor = %d \n", melhor_vizinho, melhor);
-        if(melhor_vizinho < melhor){
+        printf("Melhor vizinho VND1  = %d \n", melhor_vizinho_vnd1);
+        if(melhor_vizinho_vnd1 < melhor){
             copiar = true;
-            vnd1(melhor_vizinho, copiar);
+            vnd1(melhor_vizinho_vnd1, copiar);
         }
     }
     
     
 }
 
-void vnd2(int melhor){
+void vnd2(int melhor, bool copiar){
     int melhor_peso = 0;
     int item_leve = 1000;
     int treno_leve = 0;
-    copia_trenos(melhor);
+
+    if(!copiar)
+        copia_trenos(melhor);
+
     for(int i = 0;i<melhor;i++){
-        if(trenos_aux[i].itens == 1){
-            if (trenos_aux[i].qtd >= melhor_peso){
-                if(trenos_aux[i].array[0] < item_leve){
-                    item_leve = trenos_aux[i].array[0];
-                    melhor_peso = trenos_aux[i].qtd;
+        if(trenos_aux1[i].itens == 1){
+            if (trenos_aux1[i].qtd >= melhor_peso){
+                if(trenos_aux1[i].array[0] < item_leve){
+                    item_leve = trenos_aux1[i].array[0];
+                    melhor_peso = trenos_aux1[i].qtd;
                     treno_leve = i;
-                    //printf("melhor treno[%d] item = %d\n", treno_leve, trenos_aux[i].array[0]);
-                    //printf("melhor treno[%d] peso restante = %d\n", treno_leve, melhor_peso);
                 }
                  
             }
         }
         
     }
-    //printf("melhor item = %d\n", item_leve);
-    //printf("Mais leve treno[%d] peso do item = %d\n", treno_leve, trenos_aux[treno_leve].array[0]);
     bool troca = false;
     bool reincertion = false;
     bool inc = false;
     int pos_livre;
     int i = 0;
     while(troca == false && i < melhor){
-
-        // printf("Analisando treno[%d]\n", i);
-        // printf("Itens = %d\n", trenos_aux[i].itens);
-        // printf("Treno[%d] fora\n", treno_leve);
-    
         if(i==treno_leve){
-            // printf("Entrou\n");
             i++;
             continue;
         }
 
-        for(int j=0;j<trenos_aux[i].itens; j++){
+        for(int j=0;j<trenos_aux1[i].itens; j++){
             if(troca == true){
                 break;
-            }
-            copia_trenos(melhor);
-            // printf("item[%d] = %d\n", j, trenos_aux[i].array[j]);
-            if(trenos_aux[i].array[j] == 1000){
-                // printf("Sem mais itens no treno[%d]", i);
+            } 
+
+            if(trenos_aux1[i].array[j] == 1000){
                 break;
             }
 
             for(int t=0; t<melhor; t++){
                 if(reincertion == true && troca == false){
-                    copia_trenos(melhor);
+                    copia_trenos_vnd2(melhor);
                     reincertion = false;
                 }
 
@@ -263,55 +265,46 @@ void vnd2(int melhor){
                     t++;
                     continue;
                 }
-                if(trenos_aux[t].qtd < trenos_aux[i].array[j]){
-                    // printf("item[%d] = %d treno[%d] nao cabe no treno[%d]\n", j, trenos_aux[i].array[j], i, t);
+                if(trenos_aux1[t].qtd < trenos_aux1[i].array[j]){
                     continue;
                 }
                 inc = false;
-                for(int s=0;s< trenos_aux[t].itens;s++){
-                    // printf("Tentando colocar o %d no treno[%d]\n", trenos_aux[i].array[j], t);
-                    if(lista[trenos_aux[t].array_index[s]][trenos_aux[i].array_index[j]]){
-                        // printf("Teve inc. \n");
+                for(int s=0;s< trenos_aux1[t].itens;s++){
+                    if(lista[trenos_aux1[t].array_index[s]][trenos_aux1[i].array_index[j]]){
                         inc = true;
                         break;
                     }
                 }
-                // printf("Sem incidencia\n");
                 if(!inc){
-                    // printf("tirando o item[%d] = %d\n", trenos_aux[i].itens, trenos_aux[i].array[j]);
-                    trenos_aux[t].array[trenos_aux[t].itens] = trenos_aux[i].array[j];
-                    trenos_aux[t].array_index[trenos_aux[t].itens] = trenos_aux[i].array_index[j];
-                    trenos_aux[t].qtd -= trenos_aux[t].array[trenos_aux[t].itens];
-                    trenos_aux[t].itens++;
+                    trenos_aux1[t].array[trenos_aux1[t].itens] = trenos_aux1[i].array[j];
+                    trenos_aux1[t].array_index[trenos_aux1[t].itens] = trenos_aux1[i].array_index[j];
+                    trenos_aux1[t].qtd -= trenos_aux1[t].array[trenos_aux1[t].itens];
+                    trenos_aux1[t].itens++;
 
-                    pos_livre = trenos_aux[i].array_index[j];
+                    pos_livre = trenos_aux1[i].array_index[j];
 
-                    trenos_aux[i].array[j] = 1000;
-                    trenos_aux[i].array_index[j] = 100;
-                    trenos_aux[i].qtd += trenos_aux[t].array[trenos_aux[t].itens-1];
-                    trenos_aux[i].itens--;
+                    trenos_aux1[i].array[j] = 1000;
+                    trenos_aux1[i].array_index[j] = 100;
+                    trenos_aux1[i].qtd += trenos_aux1[t].array[trenos_aux1[t].itens-1];
+                    trenos_aux1[i].itens--;
 
                     reincertion = true;
                     
-                    if(trenos_aux[treno_leve].array[0] < trenos_aux[i].qtd){
-                        // printf("EH MAIS LEVE\n");
+                    if(trenos_aux1[treno_leve].array[0] < trenos_aux1[i].qtd){
                         inc = false;
-                        for(int s=0;s< trenos_aux[i].itens;s++){
-                            // printf("Tentando colocar o %d no treno[%d]\n", trenos_aux[treno_leve].array[0], i);
-                            if(lista[trenos_aux[treno_leve].array_index[0]][trenos_aux[i].array_index[s]]){
-                                // printf("indice do item fora = %d indice do item dentro = %d\n", trenos_aux[treno_leve].array_index[0], trenos_aux[i].array_index[s]);
-                                // printf("Teve inc. \n");
+                        for(int s=0;s< trenos_aux1[i].itens;s++){
+                            if(lista[trenos_aux1[treno_leve].array_index[0]][trenos_aux1[i].array_index[s]]){
                                 inc = true;
                             }
                         }
                         if(!inc){
-                            trenos_aux[i].array[j] = trenos_aux[treno_leve].array[0];
-                            trenos_aux[i].array_index[j] = pos_livre;
-                            trenos_aux[i].itens++;
-                            trenos_aux[treno_leve].itens = 0;
-                            trenos_aux[treno_leve].qtd += trenos_aux[treno_leve].array[0];
-                            trenos_aux[treno_leve].array[0] = 1000;
-                            trenos_aux[treno_leve].array_index[0] = 100; 
+                            trenos_aux1[i].array[j] = trenos_aux1[treno_leve].array[0];
+                            trenos_aux1[i].array_index[j] = pos_livre;
+                            trenos_aux1[i].itens++;
+                            trenos_aux1[treno_leve].itens = 0;
+                            trenos_aux1[treno_leve].qtd += trenos_aux1[treno_leve].array[0];
+                            trenos_aux1[treno_leve].array[0] = 1000;
+                            trenos_aux1[treno_leve].array_index[0] = 100; 
                             troca = true;
                             break; 
                         }
@@ -325,24 +318,21 @@ void vnd2(int melhor){
         }
         i++;
     }
-    melhor = 0;
+
+    int melhor_vizinho_vnd2 = 0;
     for(int i=0;i<n_presentes;i++){
-       if(trenos_aux[i].itens == 0){
+       if(trenos_aux1[i].itens == 0){
             continue;
        }
 
-       printf("trenos[%d].itens = %d \n", i, trenos_aux[i].itens);
-       for(int j=0;j<n_presentes;j++){
-            if(trenos_aux[i].array[j] == 1000)
-                continue;
-            printf("treno[%d].posicao[%d] = %d \n", i, j, trenos_aux[i].array[j]);
-       }
-
-       printf("-------------- \n");
-       melhor++;
+       melhor_vizinho_vnd2++;
     }
 
-    printf("Novo melhor resultado = %d \n", melhor);
+    printf("Melhor vizinho VND2 = %d \n", melhor_vizinho_vnd2);
+    if(melhor_vizinho_vnd2 < melhor){
+        copiar = true;
+        vnd2(melhor_vizinho_vnd2, copiar);
+    }
 
     
 }
@@ -358,10 +348,6 @@ int main(){
     int melhor = 0;
     bool copiar = false;
     
-    // for(int i=1;i<N_PRESENTES;i++){
-    //     printf("Posição [%d] com peso[%d] do array de presente com index %d \n",i, array[i], array_index[i]);
-    // }
-    
     //auxiliar para o p
     int aux2 = N_PRESENTES;
 
@@ -370,17 +356,14 @@ int main(){
 
     // For percorrendo os trenós
     for(int i=0;i<n_presentes; i++){
-        printf("treno %d \n", i);
 
         // verifica se a capacidade trenos[i].array[t]dos trenos é igual a 0
         if(!trenos[i].qtd){
-            printf("quantidade treno[%d] = %d \n", i, trenos[i].qtd);
             continue;
         }
 
         // For percorrendo os presentes
-        for(int p=aux2; p>0;p--){                
-            printf("entrou p = %d \n", p);
+        for(int p=aux2; p>0;p--){
 
             // flag para verificar incidencia da lista
             bool flag = false;
@@ -392,7 +375,6 @@ int main(){
             
             // for percorrendo a sacola do treno
             for(int t=0; t<n_presentes;t++){
-                printf("entrou treno[%d].posicao[%d] \n", i,t);
                 
                 // não houve ocorrencias
                 flag = true;
@@ -406,9 +388,7 @@ int main(){
                 }
 
                 // if true, existe proibição do p na sacola do treno.
-                // printf("Verifica incidencia na lista[%d][%d]\n", aux, p);
                 if(lista[aux][p]){
-                    // printf("--> ENCONTROU INCIDENCIA\n");
                     flag = false;
                     aux2 = p;
                     break;
@@ -419,7 +399,6 @@ int main(){
             if(!flag){
                 break;
             }else{
-                // printf("entrou\n");
                 // Adiciona presente na sacola do treno em questão
                 // Diminui o peso do presente na capacidade do treno
                 // Soma +1 no numero de itens da sacola do treno
@@ -427,9 +406,6 @@ int main(){
                 trenos[i].qtd = trenos[i].qtd - array[p];
                 trenos[i].array_index[trenos[i].itens] = p;
                 trenos[i].itens++;
-                
-                // printf("Adicionou um item ao treno[%d] com peso %d e posição em array[%d]. \n", i, array[p], p);
-                // printf("numero de itens treno[%d] = %d \n", i, trenos[i].itens);
 
                 i=-1;
                 break;
@@ -438,34 +414,46 @@ int main(){
     }
     
     clock_t end = clock();
-
     time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("---------------- Algoritmo guloso -------------------\n");
+    printf("\n---> Tempo gasto do algoritmo guloso: %f seconds \n", time_spent);
 
-    printf("\n\n ----> Tempo gasto do algoritmo guloso: %f seconds \n\n", time_spent);
-    int total = 0;
     for(int i=0;i<n_presentes;i++){
        if(trenos[i].itens == 0){
             continue;
        }
-    //    printf("trenos[%d].itens = %d \n", i, trenos[i].itens);
+
        melhor++;
-       
-       for(int j=0;j<N_PRESENTES;j++){
-         if(trenos[i].array[j] == 1000)
-            continue;
-
-         total++;
-       }
     }
-    printf("total de presentes = %d \n", total);
-    printf("Melhor resultado = %d \n", melhor);
+    printf("Resultado do algoritmo guloso foi que = %d trenós são necessários. \n\n", melhor);
     
-    vnd2(melhor);
-    // time_spent = 0;
-    // begin = clock();
-    // //vnd1(melhor, copiar);
-    // end = clock();
-    // time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+    bool sair = false;
+  
+    while(!sair){
+        printf("---------------- vnd1 -------------------\n\n");
+        time_spent = 0;
+        begin = clock();
+        vnd1(melhor, copiar);
+        end = clock();
+        
+        time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+        printf("---> Tempo gasto pelo vnd1 foi de %f segundos. \n\n", time_spent);
 
-    // printf("\n\n ----> Tempo gasto pelo vnd1 = %f seconds \n\n", time_spent);
+        if(melhor <= melhor_vizinho_vnd1){
+            printf("---------------- vnd2 -------------------\n\n");
+            time_spent = 0;
+            begin = clock();
+            copia_trenos_vnd2(melhor);
+            vnd2(melhor, copiar);
+            end = clock();
+                    
+            time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+            printf("---> Tempo gasto pelo vnd2 foi de %f segundos. \n\n", time_spent);
+
+        }
+
+        sair = true;
+    }
+    
+    return 0;
 }
